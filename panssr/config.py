@@ -1,4 +1,4 @@
-# panssrator/config.py
+# panssr/config.py
 import os
 
 # ---------------------------
@@ -61,7 +61,7 @@ MIN_READ_SUPPORT = 3
 # General Settings
 # ---------------------------
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATABASE_FILE = os.path.join(BASE_DIR, "panssrator.db")
+DATABASE_FILE = os.path.join(BASE_DIR, "panssr.db")
 
 # You can add more parameters here as needed.
 

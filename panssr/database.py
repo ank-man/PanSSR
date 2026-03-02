@@ -1,6 +1,6 @@
-# panssrator/database.py
+# panssr/database.py
 import sqlite3
-from panssrator import config, utils
+from panssr import config, utils
 
 def init_db(db_path: str = config.DATABASE_FILE) -> sqlite3.Connection:
     """Initialize (or connect to) the SQLite database."""

@@ -19,21 +19,10 @@ Main modules:
 - config: Configuration parameters
 """
 
+from importlib import import_module
+
 __version__ = "1.0.0"
 __author__ = "PanSSR Development Team"
-
-# Import main components for easier access
-from . import config
-from . import utils
-from . import ssr_discovery
-from . import annotator
-from . import primer_design
-from . import epcr
-from . import genotyper
-from . import marker_filter
-from . import database
-from . import report_generator
-from . import io_tools
 
 __all__ = [
     'config',
@@ -47,4 +36,17 @@ __all__ = [
     'database',
     'report_generator',
     'io_tools',
+    'genotype_utils',
+    'visualization_utils',
+    'marker_matrix',
+    'marker_types',
 ]
+
+
+def __getattr__(name):
+    """Lazily load submodules to avoid hard failures on optional dependencies."""
+    if name in __all__:
+        module = import_module(f"{__name__}.{name}")
+        globals()[name] = module
+        return module
+    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")

@@ -1,8 +1,8 @@
-# panssrator/genotyper.py
+# panssr/genotyper.py
 import pysam
 import re
 from collections import Counter
-from panssrator import config, utils
+from panssr import config, utils
 
 def count_repeat_units(seq: str, motif: str) -> int:
     """
@@ -90,29 +90,23 @@ def extract_ssr_region_from_read(read, ssr_start: int, ssr_end: int) -> str:
 
     return ''.join(extracted_seq)
 
-def genotype_marker(bam_file: str, ssr_record: dict) -> dict:
+
+
+def genotype_marker_with_handle(bam, ssr_record: dict) -> dict:
     """
-    Extract reads from a BAM file that overlap the SSR region,
-    count the repeat units in each read using CIGAR-aware extraction, and call a genotype.
+    Genotype a single SSR marker using an already opened BAM handle.
 
     Parameters:
-      bam_file: Path to the BAM file.
+      bam: Open pysam.AlignmentFile in read-binary mode.
       ssr_record: Dictionary with keys including 'chrom', 'start', 'end', 'motif'.
 
     Returns:
-      A dictionary containing the most common repeat count and supporting read counts.
+      A dictionary containing allele counts and a genotype call.
     """
-    try:
-        bam = pysam.AlignmentFile(bam_file, "rb")
-    except Exception as e:
-        utils.logger.error(f"Failed to open BAM file {bam_file}: {e}")
-        return {"allele_counts": {}, "genotype": None}
-
     allele_counts = Counter()
     chrom = ssr_record.get("chrom", None)
     if not chrom:
         utils.logger.error("SSR record does not contain chromosome information.")
-        bam.close()
         return {"allele_counts": {}, "genotype": None}
 
     start = ssr_record["start"]
@@ -121,7 +115,6 @@ def genotype_marker(bam_file: str, ssr_record: dict) -> dict:
 
     if not motif:
         utils.logger.error("SSR record does not contain motif information.")
-        bam.close()
         return {"allele_counts": {}, "genotype": None}
 
     # Fetch reads overlapping the SSR region
@@ -145,8 +138,6 @@ def genotype_marker(bam_file: str, ssr_record: dict) -> dict:
                     allele_counts[repeat_count] += 1
     except Exception as e:
         utils.logger.error(f"Error fetching reads for {chrom}:{start}-{end}: {e}")
-    finally:
-        bam.close()
 
     # Determine genotype based on allele counts
     total = sum(allele_counts.values())
@@ -158,10 +149,28 @@ def genotype_marker(bam_file: str, ssr_record: dict) -> dict:
         if len(most_common) == 1:
             genotype = {"alleles": [most_common[0][0]], "support": most_common[0][1]}
         else:
-            genotype = {"alleles": [most_common[0][0], most_common[1][0]],
-                        "support": {most_common[0][0]: most_common[0][1],
-                                    most_common[1][0]: most_common[1][1]}}
+            genotype = {
+                "alleles": [most_common[0][0], most_common[1][0]],
+                "support": {
+                    most_common[0][0]: most_common[0][1],
+                    most_common[1][0]: most_common[1][1],
+                },
+            }
     return {"allele_counts": dict(allele_counts), "genotype": genotype}
+
+
+def genotype_marker(bam_file: str, ssr_record: dict) -> dict:
+    """Compatibility wrapper that opens the BAM file and calls genotype_marker_with_handle."""
+    try:
+        bam = pysam.AlignmentFile(bam_file, "rb")
+    except Exception as e:
+        utils.logger.error(f"Failed to open BAM file {bam_file}: {e}")
+        return {"allele_counts": {}, "genotype": None}
+
+    try:
+        return genotype_marker_with_handle(bam, ssr_record)
+    finally:
+        bam.close()
 
 if __name__ == '__main__':
     # Example test: Replace 'example.bam' with an actual BAM file to run this test.

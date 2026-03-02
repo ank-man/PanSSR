@@ -1,19 +1,21 @@
-# panssrator/io_tools.py
+# panssr/io_tools.py
 import os
-from panssrator import utils
+from panssr import utils
 
 def list_files_in_dir(directory, extensions=None):
     """
-    List files in a directory; if extensions is provided, filter files by extension.
+    List regular files in a directory; if extensions is provided, filter by extension.
+    Returns files in sorted order for deterministic behavior.
     """
     files = []
-    for fname in os.listdir(directory):
-        if extensions:
-            if any(fname.lower().endswith(ext.lower()) for ext in extensions):
-                files.append(os.path.join(directory, fname))
-        else:
-            files.append(os.path.join(directory, fname))
-    return files
+    for entry in os.scandir(directory):
+        if not entry.is_file():
+            continue
+        fname = entry.name
+        if extensions and not any(fname.lower().endswith(ext.lower()) for ext in extensions):
+            continue
+        files.append(entry.path)
+    return sorted(files)
 
 def get_genome_annotation_pairs(genome_dir, annot_dir):
     """
@@ -21,11 +23,25 @@ def get_genome_annotation_pairs(genome_dir, annot_dir):
     """
     genomes = list_files_in_dir(genome_dir, extensions=[".fa", ".fasta", ".fna"])
     annots = list_files_in_dir(annot_dir, extensions=[".gff", ".gtf"])
+
+    annot_by_stem = {}
+    for annot in annots:
+        stem = os.path.splitext(os.path.basename(annot))[0]
+        annot_by_stem.setdefault(stem, []).append(annot)
+
     pairs = []
     for genome in genomes:
-        base = os.path.splitext(os.path.basename(genome))[0]
-        matching = [a for a in annots if base in os.path.basename(a)]
-        if matching:
+        stem = os.path.splitext(os.path.basename(genome))[0]
+        matching = annot_by_stem.get(stem, [])
+        if len(matching) == 1:
+            pairs.append((genome, matching[0]))
+        elif len(matching) > 1:
+            utils.logger.warning(
+                "Multiple annotations found for genome %s (stem=%s); using first: %s",
+                genome,
+                stem,
+                matching[0],
+            )
             pairs.append((genome, matching[0]))
         else:
             utils.logger.warning("No annotation found for genome %s", genome)
@@ -50,4 +66,3 @@ def read_fasta(filepath):
                 seq_lines.append(line)
         if header:
             yield header, "".join(seq_lines)
-

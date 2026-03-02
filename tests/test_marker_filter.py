@@ -2,7 +2,7 @@
 Unit tests for marker filter module
 """
 import unittest
-from panssrator import marker_filter
+from panssr import marker_filter
 
 
 class TestMarkerFilter(unittest.TestCase):

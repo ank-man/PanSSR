@@ -1,6 +1,6 @@
-# panssrator/marker_filter.py
+# panssr/marker_filter.py
 from typing import List, Dict, Any
-from panssrator import utils
+from panssr import utils
 
 def is_valid_ssr_polymorphism(sizes: List[int], motif: str, max_alleles: int = 10) -> bool:
     """

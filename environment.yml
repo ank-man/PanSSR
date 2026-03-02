@@ -1,0 +1,17 @@
+name: panssr
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.10
+  - pysam
+  - primer3-py
+  - intervaltree
+  - numpy
+  - pandas
+  - tqdm
+  - pyfastx
+  - regex
+  - streamlit
+  - pytest
+  - pip

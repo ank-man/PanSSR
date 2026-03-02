@@ -1,6 +1,6 @@
-# panssrator/report_generator.py
+# panssr/report_generator.py
 import json
-from panssrator import utils
+from panssr import utils
 
 def generate_html_report(marker_stats: dict, output_file: str):
     """

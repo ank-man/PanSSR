@@ -1,4 +1,4 @@
-# panssrator/utils.py
+# panssr/utils.py
 import os
 import sys
 import logging

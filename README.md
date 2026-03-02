@@ -5,6 +5,7 @@ A comprehensive bioinformatics tool for discovering, annotating, and genotyping 
 ## Features
 
 - **SSR Discovery**: Detect perfect tandem repeats (mono- to hexanucleotide motifs)
+- **Marker Typing**: Annotate SSR/VNTR-like classes with cSSR/iSSR-style flags
 - **Genomic Annotation**: Map SSRs to genomic features (exons, introns, genes, etc.)
 - **Primer Design**: Automated PCR primer design using Primer3
 - **In Silico PCR**: Validate primers with ePCR simulation (fuzzy matching support)
@@ -32,9 +33,29 @@ conda install -c conda-forge -c bioconda pysam primer3-py intervaltree numpy pan
 
 ## Usage
 
+
+## GUI (Streamlit)
+
+PanSSR includes a simple GUI for users who prefer not to run CLI commands directly.
+
+```bash
+streamlit run gui_app.py
+```
+
+The GUI supports:
+- Genome mode inputs (`genome_dir`, `annot_dir`, `output`)
+- Genotype mode inputs (`reference`, `markers`, `bam_dir`, `output`)
+- Live run logs and downloadable log files
+- A visualization studio inspired by MegaSSR/Krait2-style marker dashboards, including motif class plots, top motif charts, chromosome marker density, call-rate summaries, and genotype state distributions
+
+> Run the GUI from the repository root so relative paths resolve against `main.py`.
+
+
 ### Mode 1: Genome Mode (SSR Discovery and Marker Design)
 
-Discover SSRs, design primers, and create a polymorphic marker database:
+Discover SSRs, design primers, and create a polymorphic marker database.
+PanSSR now also produces a **cross-genome marker matrix** and a **common polymorphic marker set** filtered by minimum genome support.
+
 
 ```bash
 python main.py --mode genome \
@@ -47,6 +68,7 @@ python main.py --mode genome \
 - `--genome_dir`: Directory with genome FASTA files
 - `--annot_dir`: Directory with annotation GFF/GTF files
 - `--output`: Output TSV file for marker database
+- `--min_genome_support`: Minimum number of genomes a marker must be present in to be included in `*.common_poly.tsv`
 
 **Output:** `markers.tsv` containing:
 - Chromosome, start, end positions
@@ -54,6 +76,11 @@ python main.py --mode genome \
 - Genomic annotation
 - Primer sequences
 - Expected amplicon sizes
+- Marker type columns (`marker_type`, `is_cSSR`, `is_iSSR`)
+
+Additional outputs:
+- `<output>.matrix.tsv`: marker-by-genome matrix with repeat counts and polymorphism status
+- `<output>.common_poly.tsv`: markers polymorphic and present in at least `--min_genome_support` genomes
 
 ### Mode 2: Genotype Mode (Population Genotyping)
 
@@ -72,6 +99,7 @@ python main.py --mode genotype \
 - `--markers`: Marker database from genome mode
 - `--bam_dir`: Directory with BAM files (indexed)
 - `--output`: Output CSV file for genotype calls
+- `--workers`: Number of worker processes for parallel BAM genotyping (HPC-friendly)
 
 **Output:** `genotypes.csv` containing:
 - Sample name
@@ -82,7 +110,7 @@ python main.py --mode genotype \
 ## Key Improvements in This Version
 
 ### 1. **Package Structure Fixed**
-- Organized code into proper `panssrator` package
+- Organized code into proper `panssr` package
 - Added `__init__.py` for module imports
 - Now properly importable and installable
 
@@ -125,7 +153,7 @@ python main.py --mode genotype \
 
 ## Configuration
 
-Edit `panssrator/config.py` to customize parameters:
+Edit `panssr/config.py` to customize parameters:
 
 ### SSR Detection
 ```python
@@ -172,7 +200,7 @@ MIN_READ_SUPPORT = 3       # Minimum reads for genotype call
 ## Architecture
 
 ```
-panssrator/
+panssr/
 ├── __init__.py           # Package initialization
 ├── config.py            # Configuration parameters
 ├── utils.py             # Utility functions
@@ -231,3 +259,9 @@ PanSSR Development Team
 - Primer3 for primer design algorithms
 - pysam for BAM file handling
 - The bioinformatics community for valuable feedback
+
+
+## Documentation Site
+
+A detailed GitHub Pages-ready documentation site is available at `docs/index.html`.
+

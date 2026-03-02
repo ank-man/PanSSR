@@ -1,7 +1,7 @@
-# panssrator/ssr_discovery.py
+# panssr/ssr_discovery.py
 import re
 from typing import List, Dict, Any
-from panssrator import config, utils
+from panssr import config, utils
 
 @utils.timeit
 def detect_ssrs(sequence: str, min_repeats: Dict[str, int] = None) -> List[Dict[str, Any]]:
