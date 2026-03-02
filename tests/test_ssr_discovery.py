@@ -2,7 +2,7 @@
 Unit tests for SSR discovery module
 """
 import unittest
-from panssrator import ssr_discovery, config
+from panssr import ssr_discovery, config
 
 
 class TestSSRDiscovery(unittest.TestCase):
@@ -38,7 +38,7 @@ class TestSSRDiscovery(unittest.TestCase):
 
     def test_ssr_positions_are_correct(self):
         """Test that SSR positions are correctly reported"""
-        seq = "NNNNNATATATATATAT"  # AT repeat starting at position 6 (1-indexed)
+        seq = "NNNNNATATATATATATAT"  # AT repeat starting at position 6 (1-indexed), 7 repeats
         ssrs = ssr_discovery.detect_ssrs(seq)
         # Should find AT repeat
         at_ssrs = [s for s in ssrs if s['motif'] == 'AT']

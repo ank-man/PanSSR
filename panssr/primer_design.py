@@ -1,6 +1,6 @@
-# panssrator/primer_design.py
+# panssr/primer_design.py
 import primer3
-from panssrator import config, utils
+from panssr import config, utils
 
 def design_primers_for_ssr(ssr_record: dict, genome_seq: str, flank: int = config.FLANK_SIZE,
                            custom_params: dict = None) -> dict:
