@@ -1,8 +1,12 @@
-# panssrator/annotator.py
+# panssr/annotator.py
 import os
 from typing import List, Dict, Optional
-from intervaltree import Interval, IntervalTree
-from panssrator import utils
+from panssr import utils
+
+try:
+    from intervaltree import Interval, IntervalTree
+except ImportError:  # fallback for restricted/offline environments
+    from panssr._compat.intervaltree import Interval, IntervalTree
 
 def load_annotation(annotation_file: str) -> Dict[str, IntervalTree]:
     """

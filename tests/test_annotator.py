@@ -2,7 +2,7 @@
 Unit tests for annotator module
 """
 import unittest
-from panssrator import annotator
+from panssr import annotator
 
 
 class TestAnnotator(unittest.TestCase):

@@ -2,7 +2,7 @@
 Unit tests for utils module
 """
 import unittest
-from panssrator import utils
+from panssr import utils
 
 
 class TestUtils(unittest.TestCase):

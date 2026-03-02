@@ -1,7 +1,7 @@
-# panssrator/epcr.py
+# panssr/epcr.py
 import re
 import sys
-from panssrator import config, utils
+from panssr import config, utils
 
 # Try to import tre module for fuzzy matching
 TRE_AVAILABLE = False
