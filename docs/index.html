@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PanSSR Documentation</title>
+  <style>
+    :root {
+      --bg: #0b1020;
+      --panel: #121a33;
+      --text: #ebefff;
+      --muted: #b8c1ea;
+      --accent: #74a7ff;
+      --code: #0a0f1f;
+      --ok: #41d18a;
+      --warn: #ffd166;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      color: var(--text);
+      background: linear-gradient(180deg, #080d1b, #0b1020 30%);
+      line-height: 1.65;
+    }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 28px 20px 80px; }
+    h1,h2,h3 { line-height: 1.25; }
+    h1 { font-size: 2.2rem; margin-bottom: .25rem; }
+    h2 { margin-top: 2.2rem; border-bottom: 1px solid #26345f; padding-bottom: .4rem; }
+    h3 { margin-top: 1.5rem; }
+    p, li { color: var(--muted); }
+    a { color: var(--accent); }
+    .hero, .card {
+      background: var(--panel);
+      border: 1px solid #26345f;
+      border-radius: 14px;
+      padding: 18px;
+      margin-top: 14px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 12px;
+    }
+    .tag { display:inline-block; font-size: .78rem; color:#0c1428; background:var(--accent); border-radius:999px; padding:3px 10px; font-weight:700; }
+    pre {
+      background: var(--code);
+      color: #d9e3ff;
+      border: 1px solid #243258;
+      padding: 12px;
+      border-radius: 10px;
+      overflow-x: auto;
+    }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+    .note { border-left: 4px solid var(--warn); padding-left: 10px; }
+    .ok { color: var(--ok); font-weight: 600; }
+    table { width:100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { border: 1px solid #2a3a67; padding: 8px 10px; text-align:left; }
+    th { background: #1a2649; }
+    .toc li { margin: 5px 0; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <span class="tag">PanSSR Docs</span>
+    <h1>PanSSR: End-to-End SSR Discovery, Marker Development, and Genotyping</h1>
+    <p>This page is designed for GitHub Pages hosting and aims to be a full, transparent technical guide. It explains what PanSSR does, why each step exists, and how to run it at small and large scale (including HPC). No major stage is treated as a “black box.”</p>
+
+    <div class="hero">
+      <h3>What PanSSR solves</h3>
+      <p>PanSSR automates SSR marker workflows over many genomes: discovery of tandem repeats, functional annotation, primer design, in-silico validation, cross-genome polymorphism ranking, and optional population genotyping from BAM files. It supports both command-line execution and a Streamlit GUI.</p>
+    </div>
+
+    <h2>Table of Contents</h2>
+    <ul class="toc">
+      <li><a href="#concepts">1. Core concepts and background theory</a></li>
+      <li><a href="#architecture">2. Pipeline architecture</a></li>
+      <li><a href="#installation">3. Installation and environment setup</a></li>
+      <li><a href="#quickstart">4. Quick start commands</a></li>
+      <li><a href="#genome-mode">5. Genome mode in detail</a></li>
+      <li><a href="#matrix">6. Cross-genome marker matrix and polymorphic set</a></li>
+      <li><a href="#genotype-mode">7. Genotype mode in detail</a></li>
+      <li><a href="#marker-types">8. Marker classes: SSR, VNTR, cSSR, iSSR</a></li>
+      <li><a href="#scaling">9. Performance, memory, HPC parallelism</a></li>
+      <li><a href="#gui">10. GUI usage and visualization outputs</a></li>
+      <li><a href="#outputs">11. Output schema reference</a></li>
+      <li><a href="#troubleshooting">12. Troubleshooting and validation</a></li>
+    </ul>
+
+    <h2 id="concepts">1) Core concepts and background theory</h2>
+    <h3>1.1 What is an SSR?</h3>
+    <p>An SSR (Simple Sequence Repeat, microsatellite) is a short motif (1–6 bp in this tool) repeated in tandem (e.g., <code>ATATATAT</code>). SSR length variation across genomes or individuals creates useful molecular markers for genotyping and breeding.</p>
+
+    <h3>1.2 Why pangenome SSR marker design is hard</h3>
+    <ul>
+      <li>Many loci appear in one genome but not others.</li>
+      <li>Primer sites can be non-specific or absent in some genomes.</li>
+      <li>Some loci are monomorphic (not useful as markers).</li>
+      <li>Overlapping annotations create ambiguity in biological interpretation.</li>
+    </ul>
+
+    <h3>1.3 Theory behind each major stage</h3>
+    <div class="grid">
+      <div class="card">
+        <h4>SSR detection</h4>
+        <p>Pattern scanning with repeat thresholds by motif length detects perfect tandem repeats. This is computationally efficient and deterministic.</p>
+      </div>
+      <div class="card">
+        <h4>Feature annotation</h4>
+        <p>Interval overlap maps markers to genes/exons/introns/UTRs using interval indexing for fast queries.</p>
+      </div>
+      <div class="card">
+        <h4>Primer design + ePCR</h4>
+        <p>Primers are designed on flanking sequence, then checked in silico for amplicon behavior to screen unreliable loci early.</p>
+      </div>
+      <div class="card">
+        <h4>Polymorphism filtering</h4>
+        <p>A marker is retained when observed amplicon/repeat differences are biologically consistent and useful for discrimination.</p>
+      </div>
+    </div>
+
+    <h2 id="architecture">2) Pipeline architecture</h2>
+    <pre><code>Input genomes + annotations
+   ├─ SSR discovery
+   ├─ Annotation overlap
+   ├─ Primer design
+   ├─ ePCR simulation
+   └─ Marker filtering
+        ├─ markers.tsv (main)
+        ├─ markers.tsv.matrix.tsv (cross-genome matrix)
+        └─ markers.tsv.common_poly.tsv (support-threshold set)
+
+Optional genotype mode:
+   markers.tsv + BAMs + reference -> genotypes.csv</code></pre>
+
+    <h2 id="installation">3) Installation and environment setup</h2>
+    <pre><code># Conda environment (recommended)
+conda env create -f environment.yml
+conda activate panssr
+
+# Or install manually from requirements_conda.txt packages</code></pre>
+    <p class="note">For GitHub Pages: place this file at <code>docs/index.html</code> and enable Pages from the <code>docs/</code> folder in repository settings.</p>
+
+    <h2 id="quickstart">4) Quick start commands</h2>
+    <h3>Genome mode</h3>
+    <pre><code>python main.py --mode genome \
+  --genome_dir ./genomes \
+  --annot_dir ./annotations \
+  --output markers.tsv \
+  --min_genome_support 80</code></pre>
+
+    <h3>Genotype mode (parallel)</h3>
+    <pre><code>python main.py --mode genotype \
+  --reference ref.fasta \
+  --markers markers.tsv \
+  --bam_dir ./bams \
+  --output genotypes.csv \
+  --workers 16</code></pre>
+
+    <h2 id="genome-mode">5) Genome mode in detail</h2>
+    <ol>
+      <li>Load genome/annotation file pairs.</li>
+      <li>Discover SSR loci per sequence.</li>
+      <li>Annotate with genomic features.</li>
+      <li>Design primers on flanks and run ePCR checks.</li>
+      <li>Classify marker type (<code>SSR</code>/<code>VNTR</code>) and tag <code>is_cSSR</code>, <code>is_iSSR</code>.</li>
+      <li>Filter to quality marker candidates.</li>
+      <li>Write marker table and cross-genome summaries.</li>
+    </ol>
+
+    <h2 id="matrix">6) Cross-genome matrix and common polymorphic set</h2>
+    <p>The matrix output consolidates markers by locus key and records per-genome repeat values. The common polymorphic set filters loci where:</p>
+    <ul>
+      <li>polymorphism is observed (≥2 repeat states), and</li>
+      <li>support is at least <code>--min_genome_support</code> genomes.</li>
+    </ul>
+    <p>For 100 genomes, set:</p>
+    <ul>
+      <li><code>--min_genome_support 100</code> for “present in all genomes”, or</li>
+      <li><code>--min_genome_support 80</code> (or similar) for “present in most genomes”.</li>
+    </ul>
+
+    <h2 id="genotype-mode">7) Genotype mode in detail</h2>
+    <p>Reads overlapping each marker are parsed with CIGAR-aware logic to recover repeat-support evidence robustly. BAM files can be processed in parallel via <code>--workers</code>.</p>
+
+    <h2 id="marker-types">8) Marker classes: SSR, VNTR, cSSR, iSSR</h2>
+    <table>
+      <thead><tr><th>Field</th><th>Meaning</th><th>How assigned</th></tr></thead>
+      <tbody>
+        <tr><td><code>marker_type</code></td><td>SSR or VNTR-like</td><td>Based on repeat-count threshold logic</td></tr>
+        <tr><td><code>is_cSSR</code></td><td>Compound SSR flag</td><td>Adjacent/nearby loci within compound gap</td></tr>
+        <tr><td><code>is_iSSR</code></td><td>Interrupted SSR flag</td><td>Same motif separated by small interruption gap</td></tr>
+      </tbody>
+    </table>
+
+    <h2 id="scaling">9) Performance, memory, and HPC execution</h2>
+    <ul>
+      <li><span class="ok">Low-memory flow:</span> genome-mode writes filtered results progressively.</li>
+      <li><span class="ok">Parallel genotyping:</span> set <code>--workers</code> to your node core count.</li>
+      <li><span class="ok">Deterministic I/O:</span> sorted file discovery and stable output order improve reproducibility.</li>
+    </ul>
+    <pre><code># Example SLURM-style command
+python main.py --mode genotype --reference ref.fa --markers markers.tsv \
+  --bam_dir /scratch/bams --output genotypes.csv --workers ${SLURM_CPUS_PER_TASK}</code></pre>
+
+    <h2 id="gui">10) GUI usage and visualization outputs</h2>
+    <pre><code>streamlit run gui_app.py</code></pre>
+    <p>GUI includes run controls and output visualization panels (motif distribution, chromosome density, genotype call summaries).</p>
+
+    <h2 id="outputs">11) Output schema reference</h2>
+    <h3>markers.tsv</h3>
+    <p><code>genome_id, chrom, start, end, motif, repeat_count, annotation, primers, amplicon_sizes, marker_type, is_cSSR, is_iSSR</code></p>
+    <h3>markers.tsv.matrix.tsv</h3>
+    <p>Per-locus support matrix with polymorphism and per-genome values.</p>
+    <h3>markers.tsv.common_poly.tsv</h3>
+    <p>Support-threshold polymorphic subset for marker panel construction.</p>
+    <h3>genotypes.csv</h3>
+    <p>Per-sample per-marker genotype calls and allele-support counts.</p>
+
+    <h2 id="troubleshooting">12) Troubleshooting and validation</h2>
+    <ul>
+      <li>If no markers survive filtering, verify annotation pairing and primer/ePCR constraints.</li>
+      <li>If call rate is low, inspect mapping quality/read support thresholds.</li>
+      <li>Use tests for sanity checks:</li>
+    </ul>
+    <pre><code>pytest -q</code></pre>
+    <p>For scientific reporting, keep software version, CLI command, and parameter values with each run.</p>
+
+    <div class="hero">
+      <h3>Transparency note</h3>
+      <p>This documentation intentionally explains algorithm intent, assumptions, and decision criteria to minimize hidden behavior in production use.</p>
+    </div>
+  </div>
+</body>
+</html>

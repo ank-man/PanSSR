@@ -259,3 +259,9 @@ PanSSR Development Team
 - Primer3 for primer design algorithms
 - pysam for BAM file handling
 - The bioinformatics community for valuable feedback
+
+
+## Documentation Site
+
+A detailed GitHub Pages-ready documentation site is available at `docs/index.html`.
+
